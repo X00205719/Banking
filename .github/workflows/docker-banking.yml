@@ -25,7 +25,7 @@ jobs:
   
     - name: Build Docker image
       run: |
-        docker build -f src/web/dockerfile -t ${{ secrets.REGISTRY_NAME }}.azurecr.io/banking:${{ github.sha }} .
+        docker build -f dockerfile -t ${{ secrets.REGISTRY_NAME }}.azurecr.io/banking:${{ github.sha }} .
         docker tag ${{ secrets.REGISTRY_NAME }}.azurecr.io/banking:${{ github.sha }} ${{ secrets.REGISTRY_NAME }}.azurecr.io/banking:${{ env.VERSION }}.${{ github.run_number }}
 
     - name: Run Trivy vulnerability scanner
