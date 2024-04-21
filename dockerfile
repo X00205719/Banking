@@ -1,9 +1,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build-env
 WORKDIR /app
 
-COPY src/web/Banking.csproj ./
+COPY src/Banking.csproj ./
 RUN dotnet restore Banking.csproj
-COPY src/web/ ./
+COPY src/ ./
 RUN dotnet publish Banking.csproj -c Release -o out
 
 FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS runtime
