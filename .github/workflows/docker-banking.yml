@@ -1,4 +1,4 @@
-name: ACR - Web Docker Image
+name: ACR - Banking
 
 on:
   workflow_dispatch:
