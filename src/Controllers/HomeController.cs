@@ -18,6 +18,7 @@ public class HomeController : Controller
 
     public async Task<ActionResult> Index()
     {
+        return StatusCode(500, "Internal Server Error. Please try again later.");
         string apiUrl = _configuration["ApiSettings:BaseUrl"];
 
           _logger.LogTrace("Calling API at URL: {0}", apiUrl + "/api/BankAccounts");
