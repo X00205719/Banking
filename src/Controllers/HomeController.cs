@@ -18,6 +18,9 @@ public class HomeController : Controller
 
     public async Task<ActionResult> Index()
     {
+
+        return StatusCode(500, "Internal Server Error. Please try again later.");
+
         string apiUrl = _configuration["ApiSettings:BaseUrl"];
 
         _logger.LogTrace("Calling API at URL: {0}", apiUrl + "/api/BankAccounts");
@@ -44,8 +47,4 @@ public class HomeController : Controller
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 
-    public async Task<ActionResult> Failure()
-    {
-        return StatusCode(500, "Internal Server Error. Please try again later.");
-    }
 }
