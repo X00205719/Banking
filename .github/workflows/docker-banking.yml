@@ -71,60 +71,41 @@ jobs:
         git commit -m "Update canary configuration to v${{ env.VERSION }}.${{ github.run_number }}"
         git push origin main
 
-    - name: Pause for 1 minute
+    - name: Pause for 2 minutes
       run: |
-          echo "Pausing for 1 minute..."
+          echo "Pausing for 2 minutes..."
           sleep 60
           echo "Resuming the workflow."
 
-    - name: Construct URL
+    - name: Fetch data and check httpPercentReq
       run: |
-        echo "URL=http://${{ secrets.KIALI_SERVER_IP }}/kiali/api/namespaces/default/workloads/banking-deployment-canary/graph?duration=120s&graphType=workload&responseTime=95&appenders=responseTime,throughput&rateHttp=requests" >> $GITHUB_ENV
-    
-    - name: Fetch Data with Retries
-      run: |
-        MAX_RETRIES=3
-        count=0
+        URL="http://${{ secrets.KIALI_SERVER_IP }}/kiali/api/namespaces/default/workloads/banking-deployment-canary/graph?duration=240s&graphType=workload&includeIdleEdges=false"
         
-        while [ $count -lt $MAX_RETRIES ]; do
-          RESPONSE=$(curl -s "$URL")
-          echo "Response: $RESPONSE"  # Echo the response from server for debugging
-          
-          # Check if the response is not empty and contains expected data
-          if [[ ! -z "$RESPONSE" && "$(echo $RESPONSE | jq '.elements')" != "null" ]]; then
-            echo "Successfully fetched data"
-            echo "RESPONSE=$RESPONSE" >> $GITHUB_ENV
-            break
-          else
-            echo "Failed to fetch data, attempting retry $((count + 1))"
-            ((count++))
-            sleep 5  # Wait for 5 seconds before retrying
-          fi
-        done
-        
-        if [ $count -eq $MAX_RETRIES ]; then
-          echo "Failed after $MAX_RETRIES attempts."
-          exit 1
-        fi
-    
-    - name: Process Response Data
-      run: |
-        # Attempt to parse the response
-        HTTP_PERCENT_REQ=$(echo $RESPONSE | jq '.elements.edges[] | select(.data.target | select(.workload == "banking-deployment-canary" and .namespace == "default")).data.traffic.rates.httpPercentReq | tonumber' 2> /dev/null)
-        JQ_EXIT_CODE=$?
-    
-        # Check if jq encountered an error
-        if [ $JQ_EXIT_CODE -ne 0 ]; then
-          echo "Error processing JSON data with jq. Please check the JSON structure."
-          exit 1
-        fi
-    
-        # Check and log the HTTP percent request
+        RESPONSE=$(curl -s "$URL")
+        # First, get the target node ID that matches the workload and namespace
+        TARGET_ID=$(echo "$RESPONSE" | jq -r '.elements.nodes[] | select(.data.workload == "banking-deployment-canary" and .data.namespace == "default") | .data.id')
+
+        # Then, use this ID to get the httpPercentReq
+        HTTP_PERCENT_REQ=$(echo "$RESPONSE" | jq --arg target_id "$TARGET_ID" '
+          .elements.edges[] |
+          select(.data.target == $target_id) |
+          .data.traffic.rates.httpPercentReq | tonumber')
+
+        # Output the result
         echo "HTTP Percent Request: $HTTP_PERCENT_REQ"
-        
-        if [[ ! -z "$HTTP_PERCENT_REQ" && $(echo "$HTTP_PERCENT_REQ > 98" | bc -l) -eq 1 ]]; then
+
+        if (( $(echo "$HTTP_PERCENT_REQ > 98" | bc -l) )); then
           echo "Result: true"
         else
           echo "Result: false"
         fi
-    
+
+    - name: Set result as output
+      id: check_result
+      run: |
+        RESULT=$(echo "Result: false")
+        echo "::set-output name=result::$RESULT"
+
+    - name: Use the output
+      run: echo "The result of HTTP Percent Request Check is ${{ steps.check_result.outputs.result }}"
+  
