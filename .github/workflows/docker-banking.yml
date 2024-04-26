@@ -81,7 +81,20 @@ jobs:
       run: |
         URL="http://${{ secrets.KIALI_SERVER_IP }}/kiali/api/namespaces/default/workloads/banking-deployment-canary/graph?duration=120s&graphType=workload&responseTime=95&appenders=responseTime,throughput&rateHttp=requests"
         RESPONSE=$(curl -s "$URL")
-        CANARY_NODE_ID=$(echo $RESPONSE | jq -r '.elements.nodes[] | select(.data.workload == "banking-deployment-canary" and .data.namespace == "default").data.id')
-        HTTP_PERCENT_REQ=$(echo $RESPONSE | jq -r --arg CANARY_NODE_ID "$CANARY_NODE_ID" '.elements.edges[] | select(.data.source == $CANARY_NODE_ID).data.traffic.rates.httpPercentReq')
-      
-        echo "HTTP Percent Requested: $HTTP_PERCENT_REQ%"
+        HTTP_PERCENT_REQ=$(echo $RESPONSE | jq '.elements.edges[] | select(.data.target | select(.workload == "banking-deployment-canary" and .namespace == "default")).data.traffic.rates.httpPercentReq | tonumber')
+
+        if (( $(echo "$HTTP_PERCENT_REQ > 98" | bc -l) )); then
+          echo "Result: true"
+        else
+          echo "Result: false"
+        fi
+
+    - name: Set result as output
+      id: check_result
+      run: |
+        RESULT=$(echo "Result: false")
+        echo "::set-output name=result::$RESULT"
+
+    - name: Use the output
+      run: echo "The result of HTTP Percent Request Check is ${{ steps.check_result.outputs.result }}"
+  
