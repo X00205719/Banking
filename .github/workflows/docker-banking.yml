@@ -93,19 +93,16 @@ jobs:
 
         # Output the result
         echo "HTTP Percent Request: $HTTP_PERCENT_REQ"
+        echo "PROMOTE=$(echo '$HTTP_PERCENT_REQ > 98' | bc -l)" >> $GITHUB_ENV
 
-        if (( $(echo "$HTTP_PERCENT_REQ > 98" | bc -l) )); then
-          echo "Result: true"
-        else
-          echo "Result: false"
-        fi
-
-    - name: Set result as output
-      id: check_result
+    - name: Generate and Commit Kustomize Configuration
+      if: env.PROMOTE == '1'  
       run: |
-        RESULT=$(echo "Result: false")
-        echo "::set-output name=result::$RESULT"
-
-    - name: Use the output
-      run: echo "The result of HTTP Percent Request Check is ${{ steps.check_result.outputs.result }}"
-  
+        cd Kustomize/overlays/stable
+        kustomize edit set image lostud.azurecr.io/banking=${{ secrets.REGISTRY_NAME }}.azurecr.io/banking:${{ env.VERSION }}.${{ github.run_number }}
+        kustomize build .
+        git add kustomization.yaml
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git commit -m "Promte stable configuration to v${{ env.VERSION }}.${{ github.run_number }}"
+        git push origin main
