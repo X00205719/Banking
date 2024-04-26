@@ -13,6 +13,9 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+
+    - name: Install jq
+      run: sudo apt-get install jq
       
     - name: Log in to Azure CLI
       uses: azure/login@v1
@@ -67,3 +70,31 @@ jobs:
         git config --local user.name "GitHub Action"
         git commit -m "Update canary configuration to v${{ env.VERSION }}.${{ github.run_number }}"
         git push origin main
+
+    - name: Pause for 2 minutes
+      run: |
+          echo "Pausing for 2 minutes..."
+          sleep 120
+          echo "Resuming the workflow."
+
+    - name: Fetch data and check httpPercentReq
+      run: |
+        URL="http://${{ secrets.KIALI_SERVER_IP }}/kiali/api/namespaces/default/workloads/banking-deployment-canary/graph?duration=120s&graphType=workload&responseTime=95&appenders=responseTime,throughput&rateHttp=requests"
+        RESPONSE=$(curl -s "$URL")
+        HTTP_PERCENT_REQ=$(echo $RESPONSE | jq '.elements.edges[] | select(.data.target | select(.workload == "banking-deployment-canary" and .namespace == "default")).data.traffic.rates.httpPercentReq | tonumber')
+        
+        if (( $(echo "$HTTP_PERCENT_REQ < 95" | bc -l) )); then
+          echo "Result: true"
+        else
+          echo "Result: false"
+        fi
+
+    - name: Set result as output
+      id: check_result
+      run: |
+        RESULT=$(echo "Result: false")
+        echo "::set-output name=result::$RESULT"
+
+    - name: Use the output
+      run: echo "The result of HTTP Percent Request Check is ${{ steps.check_result.outputs.result }}"
+  
