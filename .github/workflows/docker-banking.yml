@@ -63,17 +63,18 @@ jobs:
     - name: Generate and Commit Kustomize Configuration
       run: |
         cd Kustomize/overlays/canary
-        kustomize edit set image lostud.azurecr.io/banking=${{ secrets.REGISTRY_NAME }}.azurecr.io/banking:${{ env.VERSION }}.${{ github.run_number }}
+        kustomize edit set image lostud.azurecr.io/banking=lostud.azurecr.io/banking:${{ env.VERSION }}.${{ github.run_number }}
         kustomize build . 
+
         git add kustomization.yaml
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git commit -m "Update canary configuration to v${{ env.VERSION }}.${{ github.run_number }}"
         git push origin main
 
-    - name: Pause for 2 minutes
+    - name: Pause for 60 seconds
       run: |
-          echo "Pausing for 2 minutes..."
+          echo "Pausing for 60 seconds..."
           sleep 60
           echo "Resuming the workflow."
 
@@ -98,13 +99,31 @@ jobs:
 
 
     - name: Generate and Commit Kustomize Configuration
-      if: env.PROMOTE == '1'  
+      if: env.PROMOTE == '1'
       run: |
         cd Kustomize/overlays/stable
-        kustomize edit set image lostud.azurecr.io/banking=${{ secrets.REGISTRY_NAME }}.azurecr.io/banking:${{ env.VERSION }}.${{ github.run_number }}
+        kustomize edit set image lostud.azurecr.io/banking=lostud.azurecr.io/banking:${{ env.VERSION }}.${{ github.run_number }}
         kustomize build .
+
         git add kustomization.yaml
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git commit -m "Promte stable configuration to v${{ env.VERSION }}.${{ github.run_number }}"
+        git push origin main
+
+    - name: Rollback
+      if: env.PROMOTE == '0'
+      run: |
+        echo "Rollback"
+        cd Kustomize/overlays/stable
+        image_tag=$(yq e '.images[] | select(.name == "lostud.azurecr.io/banking").newTag' kustomization.yaml)
+
+        cd Kustomize/overlays/canary
+        kustomize edit set image lostud.azurecr.io/banking=lostud.azurecr.io/banking:$image_tag
+        kustomize build .
+
+        git add kustomization.yaml
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git commit -m "Revert canary configuration to v$image_tag"
         git push origin main
