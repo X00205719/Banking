@@ -83,18 +83,5 @@ jobs:
         RESPONSE=$(curl -s "$URL")
         HTTP_PERCENT_REQ=$(echo $RESPONSE | jq '.elements.edges[] | select(.data.target | select(.workload == "banking-deployment-canary" and .namespace == "default")).data.traffic.rates.httpPercentReq | tonumber')
         
-        if (( $(echo "$HTTP_PERCENT_REQ < 95" | bc -l) )); then
-          echo "Result: true"
-        else
-          echo "Result: false"
-        fi
-
-    - name: Set result as output
-      id: check_result
-      run: |
-        RESULT=$(echo "Result: false")
-        echo "::set-output name=result::$RESULT"
-
-    - name: Use the output
-      run: echo "The result of HTTP Percent Request Check is ${{ steps.check_result.outputs.result }}"
+        echo "HTTP Percent Requested: $HTTP_PERCENT_REQ%"
   
