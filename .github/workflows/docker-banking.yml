@@ -93,7 +93,9 @@ jobs:
 
         # Output the result
         echo "HTTP Percent Request: $HTTP_PERCENT_REQ"
-        echo "PROMOTE=$(echo '$HTTP_PERCENT_REQ > 98' | bc -l)" >> $GITHUB_ENV
+        PROMOTE=$(echo "$HTTP_PERCENT_REQ > 98" | bc -l)
+        echo "PROMOTE=$PROMOTE" >> $GITHUB_ENV
+
 
     - name: Generate and Commit Kustomize Configuration
       if: env.PROMOTE == '1'  
