@@ -82,6 +82,7 @@ jobs:
         URL="http://${{ secrets.KIALI_SERVER_IP }}/kiali/api/namespaces/default/workloads/banking-deployment-canary/graph?duration=120s&graphType=workload&responseTime=95&appenders=responseTime,throughput&rateHttp=requests"
         RESPONSE=$(curl -s "$URL")
         HTTP_PERCENT_REQ=$(echo $RESPONSE | jq '.elements.edges[] | select(.data.target | select(.workload == "banking-deployment-canary" and .namespace == "default")).data.traffic.rates.httpPercentReq | tonumber')
+        echo "HTTP Percent Request: $HTTP_PERCENT_REQ"
 
         if (( $(echo "$HTTP_PERCENT_REQ > 98" | bc -l) )); then
           echo "Result: true"
