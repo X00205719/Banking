@@ -80,26 +80,27 @@ jobs:
 
     - name: Fetch data and check httpPercentReq
       run: |
-        URL="http://${{ secrets.KIALI_SERVER_IP }}/kiali/api/namespaces/default/workloads/banking-deployment-canary/graph?duration=240s&graphType=workload&includeIdleEdges=false"
+        URL="http://${{ secrets.KIALI_SERVER_IP }}/kiali/api/namespaces/default/workloads/banking-deployment-canary/graph?duration=400s&graphType=workload&includeIdleEdges=false"
         
         RESPONSE=$(curl -s "$URL")
         # First, get the target node ID that matches the workload and namespace
         TARGET_ID=$(echo "$RESPONSE" | jq -r '.elements.nodes[] | select(.data.workload == "banking-deployment-canary" and .data.namespace == "default") | .data.id')
 
         # Then, use this ID to get the httpPercentReq
-        HTTP_PERCENT_REQ=$(echo "$RESPONSE" | jq --arg target_id "$TARGET_ID" '
+        PROMOTE=$(echo "$RESPONSE" | jq --arg target_id "$TARGET_ID" '
           .elements.edges[] |
           select(.data.target == $target_id) |
-          .data.traffic.rates.httpPercentReq | tonumber')
-
-        # Output the result
-        echo "HTTP Percent Request: $HTTP_PERCENT_REQ"
-        PROMOTE=$(echo "$HTTP_PERCENT_REQ > 98" | bc -l)
+          if .data.traffic.rates | has("http5xx") and .data.traffic.rates.http5xx | tonumber > 0 then
+            "true"
+          else
+            "false"
+          end
+        ')
         echo "PROMOTE=$PROMOTE" >> $GITHUB_ENV
 
 
     - name: Generate and Commit Kustomize Configuration
-      if: env.PROMOTE == '1'
+      if: env.PROMOTE == 'true'
       run: |
         cd Kustomize/overlays/stable
         kustomize edit set image lostud.azurecr.io/banking=lostud.azurecr.io/banking:${{ env.VERSION }}.${{ github.run_number }}
@@ -112,7 +113,7 @@ jobs:
         git push origin main
 
     - name: Rollback
-      if: env.PROMOTE == '0'
+      if: env.PROMOTE == 'false'
       run: |
         echo "Rollback"
         cd Kustomize/overlays/stable
