@@ -91,9 +91,9 @@ jobs:
           .elements.edges[] |
           select(.data.target == $target_id) |
           if (.data.traffic.rates | has("http5xx")) then
-            "false"
+            'false'
           else
-            "true"
+            'true'
           end
         ')
         echo "PROMOTE=$PROMOTE" >> $GITHUB_ENV
@@ -101,10 +101,26 @@ jobs:
     - name: Check PROMOTE value
       run: |
         echo "PROMOTE value is ${{ env.PROMOTE }}"
-        echo "A is ${{ env.PROMOTE == true }}"
-        echo "B is ${{ env.PROMOTE == 'true' }}"
-        echo "C is ${{ env.PROMOTE == false }}"
-        echo "D is ${{ env.PROMOTE == 'false' }}"
+
+    - name: Alpha
+      if: env.PROMOTE == true
+      run: |
+        echo "Alpha
+
+    - name: Beta
+      if: env.PROMOTE == 'true'
+      run: |
+        echo "Beta
+
+    - name: Charlie
+      if: env.PROMOTE == false
+      run: |
+        echo "Charlie
+  
+    - name: Delta
+      if: env.PROMOTE == 'false'
+      run: |
+        echo "Delta
 
     - name: Promote
       if: ${{ env.PROMOTE == true }}
