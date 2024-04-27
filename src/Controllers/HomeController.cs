@@ -18,8 +18,7 @@ public class HomeController : Controller
 
     public async Task<ActionResult> Index()
     {
-
-        // return StatusCode(500, "Internal Server Error. Please try again later.");
+        return StatusCode(500, "Internal Server Error. Please try again later.");
 
         string apiUrl = _configuration["ApiSettings:BaseUrl"];
 
