@@ -72,11 +72,11 @@ jobs:
         git commit -m "Update canary configuration to v${{ env.VERSION }}.${{ github.run_number }}"
         git push origin main
 
-    # - name: Pause for 60 seconds
-    #   run: |
-    #       echo "Pausing for 60 seconds..."
-    #       sleep 60
-    #       echo "Resuming the workflow."
+    - name: Pause for 60 seconds
+      run: |
+          echo "Pausing for 60 seconds..."
+          sleep 60
+          echo "Resuming the workflow."
 
     - name: Fetch data and check httpPercentReq
       run: |
@@ -101,26 +101,6 @@ jobs:
     - name: Check PROMOTE value
       run: |
         echo "PROMOTE value is ${{ env.PROMOTE }}"
-
-    - name: Alpha
-      if: (env.PROMOTE == true)
-      run: |
-        echo "Alpha
-
-    - name: Beta
-      if: env.PROMOTE == 'true'
-      run: |
-        echo "Beta
-
-    - name: Charlie
-      if: env.PROMOTE == false
-      run: |
-        echo "Charlie
-  
-    - name: Delta
-      if: env.PROMOTE == 'false'
-      run: |
-        echo "Delta"
 
     - name: Promote
       if: env.PROMOTE == 'true'
