@@ -72,10 +72,10 @@ jobs:
         git commit -m "Update canary configuration to v${{ env.VERSION }}.${{ github.run_number }}"
         git push origin main
 
-    - name: Pause for 60 seconds
+    - name: Pause for 120 seconds
       run: |
-          echo "Pausing for 60 seconds..."
-          sleep 60
+          echo "Pausing for 120 seconds..."
+          sleep 120
           echo "Resuming the workflow."
 
     - name: Fetch data and check httpPercentReq
