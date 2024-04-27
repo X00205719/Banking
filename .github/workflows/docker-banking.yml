@@ -102,7 +102,7 @@ jobs:
       run: echo "PROMOTE value is ${{ env.PROMOTE }}"
 
     - name: Promote
-      if: ${{ env.PROMOTE == 'true' }}
+      if: ${{ env.PROMOTE == true }}
       run: |
         cd Kustomize/overlays/stable
         kustomize edit set image lostud.azurecr.io/banking=lostud.azurecr.io/banking:${{ env.VERSION }}.${{ github.run_number }}
@@ -115,7 +115,7 @@ jobs:
         git push origin main
 
     - name: Rollback
-      if: ${{ env.PROMOTE == 'false' }}
+      if: ${{ env.PROMOTE == false }}
       run: |
         echo "Rollback"
         cd Kustomize/overlays/stable
