@@ -98,14 +98,6 @@ jobs:
         ')
         echo "PROMOTE=$PROMOTE" >> $GITHUB_ENV
 
-    - name: Check PROMOTE value
-      run: |
-        echo "PROMOTE value is ${{ env.PROMOTE }}"
-        echo "A is ${{ env.PROMOTE == true }}"
-        echo "B is ${{ env.PROMOTE == 'true' }}"
-        echo "C is ${{ env.PROMOTE == false }}"
-        echo "D is ${{ env.PROMOTE == 'false' }}"
-
     - name: Promote
       if: ${{ env.PROMOTE == true }}
       run: |
@@ -126,7 +118,7 @@ jobs:
         cd Kustomize/overlays/stable
         image_tag=$(yq e '.images[] | select(.name == "lostud.azurecr.io/banking").newTag' kustomization.yaml)
 
-        cd Kustomize/overlays/canary
+        cd ../canary
         kustomize edit set image lostud.azurecr.io/banking=lostud.azurecr.io/banking:$image_tag
         kustomize build .
 
