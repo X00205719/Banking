@@ -99,7 +99,12 @@ jobs:
         echo "PROMOTE=$PROMOTE" >> $GITHUB_ENV
 
     - name: Check PROMOTE value
-      run: echo "PROMOTE value is ${{ env.PROMOTE }}"
+      run: |
+        echo "PROMOTE value is ${{ env.PROMOTE }}"
+        echo "A is ${{ env.PROMOTE == true }}"
+        echo "B is ${{ env.PROMOTE == 'true' }}"
+        echo "C is ${{ env.PROMOTE == false }}"
+        echo "D is ${{ env.PROMOTE == 'false' }}"
 
     - name: Promote
       if: ${{ env.PROMOTE == true }}
