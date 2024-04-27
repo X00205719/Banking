@@ -120,7 +120,7 @@ jobs:
     - name: Delta
       if: env.PROMOTE == 'false'
       run: |
-        echo "Delta
+        echo "Delta"
 
     - name: Promote
       if: ${{ env.PROMOTE == true }}
